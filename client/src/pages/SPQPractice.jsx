@@ -22,13 +22,15 @@ export const SPQPractice = () => {
   
   // Execution Console states
   const [compiling, setCompiling] = useState(false);
-  const [consoleOutput, setConsoleOutput] = useState('');
   const [testCaseResults, setTestCaseResults] = useState([]);
+  const [compilationError, setCompilationError] = useState('');
+  const [activeTestCaseTab, setActiveTestCaseTab] = useState(0);
   
   // Timer states
   const [timeLeft, setTimeLeft] = useState(3600); // 60 minutes
   const [timeSpent, setTimeSpent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const timerRef = useRef(null);
 
   // Sync Timer
@@ -87,8 +89,9 @@ export const SPQPractice = () => {
         setTimeLeft(testData.duration);
         setTestStarted(true);
         setCurrentIndex(0);
-        setConsoleOutput('Console cleared. Write code and click "Run Code" to test sample inputs.');
+        setCompilationError('');
         setTestCaseResults([]);
+        setActiveTestCaseTab(0);
         showToast('Hands-On Code Arena launched. Timer is ticking!');
       }
     } catch (err) {
@@ -117,7 +120,7 @@ export const SPQPractice = () => {
 
     try {
       setCompiling(true);
-      setConsoleOutput('Compiling source code...');
+      setCompilationError('');
       setTestCaseResults([]);
 
       const res = await axios.post(`${apiUrl}/test/run-spq`, {
@@ -128,29 +131,13 @@ export const SPQPractice = () => {
       if (res.data.success) {
         const runData = res.data.data;
         if (runData.success === false && runData.errorType === 'compilation') {
-          // Compilation failed
-          setConsoleOutput(`COMPILATION ERROR:\n\n${runData.error}`);
+          setCompilationError(runData.error);
           showToast('Compilation Failed!', 'error');
         } else {
-          // Compilation succeeded, show test cases result
           setTestCaseResults(runData.results || []);
+          setActiveTestCaseTab(0);
           const allPassed = runData.results.every(r => r.passed);
           
-          let outputText = 'COMPILATION SUCCESSFUL\n\n';
-          runData.results.forEach((r, idx) => {
-            outputText += `Sample Test Case ${idx + 1}: ${r.passed ? 'PASSED ✅' : 'FAILED ❌'}\n`;
-            if (!r.passed) {
-              if (r.error) {
-                outputText += `  Execution Error: ${r.error}\n`;
-              } else {
-                outputText += `  Input:    ${r.input.replace(/\n/g, ' ')}\n`;
-                outputText += `  Expected: ${r.expected.replace(/\n/g, ' ')}\n`;
-                outputText += `  Actual:   ${r.actual.replace(/\n/g, ' ')}\n`;
-              }
-            }
-          });
-
-          setConsoleOutput(outputText);
           if (allPassed) {
             showToast('All Sample Test Cases Passed!');
           } else {
@@ -160,7 +147,7 @@ export const SPQPractice = () => {
       }
     } catch (err) {
       console.error(err);
-      setConsoleOutput(`RUNNER ERROR:\n\n${err.response?.data?.message || err.message}`);
+      setCompilationError(err.response?.data?.message || err.message);
       showToast('Error executing program', 'error');
     } finally {
       setCompiling(false);
@@ -174,9 +161,12 @@ export const SPQPractice = () => {
   };
 
   const handleManualSubmit = () => {
-    if (window.confirm('Are you sure you want to end the coding test? This will execute your solutions against hidden test cases.')) {
-      executeSubmission();
-    }
+    setShowSubmitModal(true);
+  };
+
+  const confirmSubmit = () => {
+    setShowSubmitModal(false);
+    executeSubmission();
   };
 
   const executeSubmission = async () => {
@@ -298,8 +288,9 @@ export const SPQPractice = () => {
               key={q._id}
               onClick={() => {
                 setCurrentIndex(idx);
-                setConsoleOutput('Console cleared. Write code and click "Run Code".');
+                setCompilationError('');
                 setTestCaseResults([]);
+                setActiveTestCaseTab(0);
               }}
               style={{
                 padding: '8px 16px',
@@ -479,11 +470,11 @@ export const SPQPractice = () => {
             </button>
           </div>
 
-          {/* Console logger */}
+          {/* Hackerrank-style Console logger */}
           <div
             style={{
-              height: '160px',
-              background: '#212529',
+              height: '240px',
+              background: '#ffffff',
               border: '1px solid #ced4da',
               borderRadius: '4px',
               display: 'flex',
@@ -491,30 +482,102 @@ export const SPQPractice = () => {
               minHeight: 0
             }}
           >
-            <div style={{ padding: '6px 12px', background: '#343a40', borderBottom: '1px solid #ced4da', fontSize: '11px', fontWeight: 'bold', color: '#f8f9fa' }}>
-              COMPILER EXECUTION CONSOLE
+            {/* Header / Tabs */}
+            <div style={{ display: 'flex', background: '#f8f9fa', borderBottom: '1px solid #ced4da' }}>
+              <div style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 'bold', color: '#495057', borderRight: '1px solid #ced4da', display: 'flex', alignItems: 'center' }}>
+                EXECUTION RESULTS
+              </div>
+              
+              {testCaseResults.length > 0 && !compilationError && (
+                <div style={{ display: 'flex', overflowX: 'auto', flexGrow: 1 }}>
+                  {testCaseResults.map((tc, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveTestCaseTab(idx)}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        background: activeTestCaseTab === idx ? '#ffffff' : 'transparent',
+                        borderBottom: activeTestCaseTab === idx ? '2px solid #002f6c' : '2px solid transparent',
+                        color: tc.passed ? '#198754' : '#dc3545',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Test Case {idx + 1} {tc.passed ? '✅' : '❌'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <pre
-              style={{
-                flexGrow: 1,
-                padding: '10px 12px',
-                overflowY: 'auto',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '12px',
-                color: '#75b798', // Green success output console
-                lineHeight: '1.4',
-                whiteSpace: 'pre-wrap',
-                margin: 0
-              }}
-            >
-              {consoleOutput}
-            </pre>
+
+            {/* Content Area */}
+            <div style={{ flexGrow: 1, overflowY: 'auto', padding: '12px' }}>
+              {compilationError ? (
+                <div>
+                  <h4 style={{ color: '#dc3545', fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>Compilation Error</h4>
+                  <pre style={{ background: '#fdf2f2', color: '#842029', padding: '10px', borderRadius: '4px', border: '1px solid #f5c2c7', fontSize: '12.5px', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap', margin: 0 }}>
+                    {compilationError}
+                  </pre>
+                </div>
+              ) : testCaseResults.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {testCaseResults[activeTestCaseTab]?.error && (
+                    <div>
+                      <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '4px' }}>Execution Error</h4>
+                      <pre style={{ background: '#f8d7da', padding: '8px', borderRadius: '4px', border: '1px solid #f5c2c7', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                        {testCaseResults[activeTestCaseTab].error}
+                      </pre>
+                    </div>
+                  )}
+                  <div>
+                    <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '4px' }}>Input</h4>
+                    <pre style={{ background: '#f8f9fa', padding: '8px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                      {testCaseResults[activeTestCaseTab]?.input || 'No input'}
+                    </pre>
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '4px' }}>Expected Output</h4>
+                    <pre style={{ background: '#f8f9fa', padding: '8px', borderRadius: '4px', border: '1px solid #ced4da', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                      {testCaseResults[activeTestCaseTab]?.expected || 'Empty output'}
+                    </pre>
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '12px', fontWeight: 'bold', color: '#495057', marginBottom: '4px' }}>Your Output</h4>
+                    <pre style={{ background: testCaseResults[activeTestCaseTab]?.passed ? '#d1e7dd' : '#f8d7da', padding: '8px', borderRadius: '4px', border: testCaseResults[activeTestCaseTab]?.passed ? '1px solid #a3cfbb' : '1px solid #f5c2c7', fontSize: '12px', fontFamily: 'var(--font-mono)', margin: 0 }}>
+                      {testCaseResults[activeTestCaseTab]?.actual || 'Empty output'}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#6c757d', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  Run your code to see the test case results here.
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
       </div>
 
     </div>
+
+      {/* Custom Submit Confirmation Modal */}
+      {showSubmitModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="fade-in glass" style={{ background: '#fff', padding: '30px', borderRadius: '8px', maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid #ced4da' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#002f6c', marginBottom: '10px' }}>Submit Assessment?</h3>
+            <p style={{ color: '#495057', fontSize: '14px', marginBottom: '20px' }}>
+              Are you sure you want to end the coding test? This will execute your solutions against the hidden evaluation test cases.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={() => setShowSubmitModal(false)} className="btn-secondary" style={{ padding: '10px 20px' }}>Cancel</button>
+              <button onClick={confirmSubmit} className="btn-primary" style={{ padding: '10px 20px', background: '#198754', borderColor: '#198754' }}>Yes, Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 };
 

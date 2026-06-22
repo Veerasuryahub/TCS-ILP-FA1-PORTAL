@@ -53,40 +53,11 @@ export const startTest = async (req, res) => {
       selectedQuestions = shuffleArray(mcqs).slice(0, 15); // Default to 15 questions for topic practice
       duration = 900; // 15 minutes
     } else if (testType === 'SPQ') {
-      // Hands-on SPQ: 3 questions (Q1: Java OOP, Q2: Java Problem Solving, Q3: Unix)
-      duration = 3600; // 60 minutes
+      // Hands-on SPQ: 5 random questions across subjects
+      duration = 5400; // 90 minutes
       
-      // Q1: Java OOP
-      const q1Pool = await Question.find({ 
-        subject: 'Java', 
-        questionType: 'SPQ', 
-        topic: { $in: ['OOP', 'Classes', 'Objects', 'Constructor', 'Inheritance', 'Polymorphism', 'Abstraction', 'Encapsulation', 'Interface', 'Method Overloading', 'Method Overriding'] } 
-      });
-      const q1 = shuffleArray(q1Pool)[0];
-
-      // Q2: Java Problem Solving
-      const q2Pool = await Question.find({ 
-        subject: 'Java', 
-        questionType: 'SPQ', 
-        topic: { $nin: ['OOP', 'Classes', 'Objects', 'Constructor', 'Inheritance', 'Polymorphism', 'Abstraction', 'Encapsulation', 'Interface', 'Method Overloading', 'Method Overriding'] } 
-      });
-      const q2 = shuffleArray(q2Pool)[0];
-
-      // Q3: Unix
-      const q3Pool = await Question.find({ subject: 'Unix', questionType: 'SPQ' });
-      const q3 = shuffleArray(q3Pool)[0];
-
-      // Combine
-      if (q1) selectedQuestions.push(q1);
-      if (q2) selectedQuestions.push(q2);
-      if (q3) selectedQuestions.push(q3);
-
-      // Fallback in case topics are not classified strictly
-      if (selectedQuestions.length < 3) {
-        const anySpqs = await Question.find({ questionType: 'SPQ', _id: { $nin: selectedQuestions.map(q => q._id) } });
-        const shuffledSpqs = shuffleArray(anySpqs).slice(0, 3 - selectedQuestions.length);
-        selectedQuestions.push(...shuffledSpqs);
-      }
+      const spqPool = await Question.find({ questionType: 'SPQ' });
+      selectedQuestions = shuffleArray(spqPool).slice(0, 5);
     }
 
     if (selectedQuestions.length === 0) {

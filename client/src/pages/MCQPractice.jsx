@@ -26,6 +26,7 @@ export const MCQPractice = () => {
   const [timeLeft, setTimeLeft] = useState(0); // in seconds
   const [timeSpent, setTimeSpent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   
   const timerRef = useRef(null);
 
@@ -136,14 +137,12 @@ export const MCQPractice = () => {
   };
 
   const handleManualSubmit = () => {
-    const unansweredCount = answers.filter((a) => !a.answer).length;
-    let message = 'Are you sure you want to submit?';
-    if (unansweredCount > 0) {
-      message = `You have ${unansweredCount} unanswered questions. Are you sure you want to submit?`;
-    }
-    if (window.confirm(message)) {
-      executeSubmission();
-    }
+    setShowSubmitModal(true);
+  };
+
+  const confirmSubmit = () => {
+    setShowSubmitModal(false);
+    executeSubmission();
   };
 
   const executeSubmission = async () => {
@@ -522,6 +521,24 @@ export const MCQPractice = () => {
           {!submitting && <CheckCircle size={14} style={{ marginLeft: '6px' }} />}
         </button>
       </div>
+
+      {/* Custom Submit Confirmation Modal */}
+      {showSubmitModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="fade-in glass" style={{ background: '#fff', padding: '30px', borderRadius: '8px', maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid #ced4da' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#002f6c', marginBottom: '10px' }}>Submit Assessment?</h3>
+            <p style={{ color: '#495057', fontSize: '14px', marginBottom: '20px' }}>
+              {answers.filter(a => !a.answer).length > 0 
+                ? `You have ${answers.filter(a => !a.answer).length} unanswered questions. Are you sure you want to submit?`
+                : 'Are you sure you want to submit your assessment?'}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={() => setShowSubmitModal(false)} className="btn-secondary" style={{ padding: '10px 20px' }}>Cancel</button>
+              <button onClick={confirmSubmit} className="btn-primary" style={{ padding: '10px 20px', background: '#198754', borderColor: '#198754' }}>Yes, Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
