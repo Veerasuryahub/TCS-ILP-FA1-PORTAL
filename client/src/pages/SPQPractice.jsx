@@ -278,6 +278,7 @@ export const SPQPractice = () => {
   const timerCritical = timeLeft < 600; // Under 10 minutes turns red
 
   return (
+    <>
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)', gap: '16px', paddingBottom: '10px' }}>
       
       {/* Top Controls Row */}
@@ -578,6 +579,7 @@ export const SPQPractice = () => {
           </div>
         </div>
       )}
+    </>
   );
 };
 
