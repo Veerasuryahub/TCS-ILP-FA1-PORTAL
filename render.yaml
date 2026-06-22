@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: fa1-master
+    env: node
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        value: mongodb+srv://veera:veerasurya@cluster0.cxhtovi.mongodb.net/fa1_master?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: fa1mastersecret123
