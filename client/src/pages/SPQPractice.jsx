@@ -283,7 +283,7 @@ export const SPQPractice = () => {
       
       {/* Top Controls Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }}>
           {questions.map((q, idx) => (
             <button
               key={q._id}
@@ -294,17 +294,19 @@ export const SPQPractice = () => {
                 setActiveTestCaseTab(0);
               }}
               style={{
-                padding: '8px 16px',
-                borderRadius: '4px',
-                border: idx === currentIndex ? '2px solid #002f6c' : '1px solid #ced4da',
-                background: idx === currentIndex ? '#e7f1ff' : '#ffffff',
-                color: '#212529',
+                padding: '6px 14px',
+                borderRadius: '6px 6px 0 0',
+                border: idx === currentIndex ? '1px solid #ced4da' : '1px solid transparent',
+                borderBottom: 'none',
+                background: idx === currentIndex ? '#ffffff' : '#f8f9fa',
+                color: idx === currentIndex ? '#002f6c' : '#6c757d',
                 cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold'
+                fontSize: '12px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap'
               }}
             >
-              Question {idx + 1} ({q.subject})
+              Q{idx + 1} ({q.subject})
             </button>
           ))}
         </div>
@@ -347,7 +349,7 @@ export const SPQPractice = () => {
       </div>
 
       {/* Dual Pane split screen layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr', gap: '20px', flexGrow: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '12px', flexGrow: 1, minHeight: 0 }}>
         
         {/* Left Pane: Question Details & Samples */}
         <div className="glass" style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
