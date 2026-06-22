@@ -1,12 +1,13 @@
 import { exec, execSync } from 'child_process';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMP_DIR = path.join(__dirname, '..', 'temp_run');
+const TEMP_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'temp_run') : path.join(__dirname, '..', 'temp_run');
 
 // Ensure temp directory exists
 if (!fs.existsSync(TEMP_DIR)) {
