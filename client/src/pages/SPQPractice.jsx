@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +9,36 @@ import Editor from '@monaco-editor/react';
 export const SPQPractice = () => {
   const { apiUrl, showToast } = useAuth();
   const navigate = useNavigate();
+
+  // Split pane states
+  const containerRef = useRef(null);
+  const [leftWidth, setLeftWidth] = useState(38.5);
+
+  const startResizing = useCallback((e) => {
+    e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    
+    const doDrag = (moveEvent) => {
+      const newWidthPx = moveEvent.clientX - containerRect.left;
+      const newWidthPct = (newWidthPx / containerRect.width) * 100;
+      if (newWidthPct >= 15 && newWidthPct <= 85) {
+        setLeftWidth(newWidthPct);
+      }
+    };
+
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.body.style.cursor = 'auto';
+    };
+
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.body.style.cursor = 'col-resize';
+  }, []);
 
   // Assessment flow states
   const [testStarted, setTestStarted] = useState(false);
@@ -349,10 +379,10 @@ export const SPQPractice = () => {
       </div>
 
       {/* Dual Pane split screen layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '12px', flexGrow: 1, minHeight: 0 }}>
+      <div ref={containerRef} style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
         
         {/* Left Pane: Question Details & Samples */}
-        <div className="glass" style={{ padding: '20px', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+        <div className="glass" style={{ width: `${leftWidth}%`, padding: '20px', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
           <div>
             <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#002f6c' }}>
               SECTION 1 &raquo; QUESTION {currentIndex + 1}
@@ -418,8 +448,27 @@ export const SPQPractice = () => {
           </div>
         </div>
 
+        {/* Draggable Divider */}
+        <div 
+          onMouseDown={startResizing}
+          style={{
+            width: '12px',
+            cursor: 'col-resize',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}
+        >
+          <div 
+            style={{ width: '4px', height: '40px', background: '#ced4da', borderRadius: '2px', transition: 'background 0.2s' }} 
+            onMouseEnter={(e) => e.target.style.background = '#6c757d'}
+            onMouseLeave={(e) => e.target.style.background = '#ced4da'}
+          />
+        </div>
+
         {/* Right Pane: Code Editor + Output Logger */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', minHeight: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', minHeight: 0 }}>
           
           {/* Code Editor Container */}
           <div className="glass" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px' }}>
