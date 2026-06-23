@@ -40,6 +40,35 @@ export const SPQPractice = () => {
     document.body.style.cursor = 'col-resize';
   }, []);
 
+  const rightPaneRef = useRef(null);
+  const [topHeight, setTopHeight] = useState(55);
+
+  const startResizingVertical = useCallback((e) => {
+    e.preventDefault();
+    const container = rightPaneRef.current;
+    if (!container) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    
+    const doDrag = (moveEvent) => {
+      const newHeightPx = moveEvent.clientY - containerRect.top;
+      const newHeightPct = (newHeightPx / containerRect.height) * 100;
+      if (newHeightPct >= 20 && newHeightPct <= 85) {
+        setTopHeight(newHeightPct);
+      }
+    };
+
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.body.style.cursor = 'auto';
+    };
+
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.body.style.cursor = 'row-resize';
+  }, []);
+
   // Assessment flow states
   const [testStarted, setTestStarted] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -468,10 +497,10 @@ export const SPQPractice = () => {
         </div>
 
         {/* Right Pane: Code Editor + Output Logger */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', minHeight: 0 }}>
+        <div ref={rightPaneRef} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
           
           {/* Code Editor Container */}
-          <div className="glass" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px' }}>
+          <div className="glass" style={{ height: `${topHeight}%`, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', backgroundColor: '#ffffff', border: '1px solid #ced4da', borderRadius: '4px' }}>
             <div
               style={{
                 padding: '8px 14px',
@@ -509,8 +538,30 @@ export const SPQPractice = () => {
             </div>
           </div>
 
+          {/* Horizontal Draggable Divider */}
+          <div 
+            onMouseDown={startResizingVertical}
+            style={{
+              height: '16px',
+              cursor: 'row-resize',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            <div 
+              style={{ height: '4px', width: '40px', background: '#ced4da', borderRadius: '2px', transition: 'background 0.2s' }} 
+              onMouseEnter={(e) => e.target.style.background = '#6c757d'}
+              onMouseLeave={(e) => e.target.style.background = '#ced4da'}
+            />
+          </div>
+
+          {/* Bottom: Action Row + Console */}
+          <div style={{ height: `calc(${100 - topHeight}% - 16px)`, display: 'flex', flexDirection: 'column', gap: '16px', minHeight: 0 }}>
+          
           {/* Action Row */}
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
             <button
               onClick={handleRunCode}
               disabled={compiling}
@@ -525,7 +576,7 @@ export const SPQPractice = () => {
           {/* Hackerrank-style Console logger */}
           <div
             style={{
-              height: '240px',
+              flex: 1,
               background: '#ffffff',
               border: '1px solid #ced4da',
               borderRadius: '4px',
@@ -610,6 +661,7 @@ export const SPQPractice = () => {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
 
