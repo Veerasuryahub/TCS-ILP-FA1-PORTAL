@@ -441,7 +441,7 @@ const toughQuestions = [
         isHidden: false
       },
       {
-        input: '1.1.1.1 - [10] "G /" 404\n1.1.1.1 - [10] "G /" 404\n2.2.2.2 - [10] "G /" 404\n',
+        input: '1.1.1.1 - [10/Oct] "GET / HTTP/1.1" 404\n1.1.1.1 - [10/Oct] "GET / HTTP/1.1" 404\n2.2.2.2 - [10/Oct] "GET / HTTP/1.1" 404\n',
         output: '1.1.1.1\n',
         isHidden: true
       }
