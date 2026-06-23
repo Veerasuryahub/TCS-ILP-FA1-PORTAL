@@ -516,6 +516,10 @@ const toughQuestions = [
 const runSeed = async () => {
   try {
     await connectDB();
+    console.log('Removing old tough questions to prevent duplicates...');
+    const questionTexts = toughQuestions.map(q => q.question);
+    await Question.deleteMany({ question: { $in: questionTexts } });
+    
     console.log('Inserting tough questions...');
     await Question.insertMany(toughQuestions);
     console.log(`Successfully seeded ${toughQuestions.length} tough questions.`);
